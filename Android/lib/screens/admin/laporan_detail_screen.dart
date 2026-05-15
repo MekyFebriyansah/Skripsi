@@ -82,7 +82,8 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
     );
 
     try {
-      final opened = await launchUrl(geoUri, mode: LaunchMode.externalApplication);
+      final opened =
+          await launchUrl(geoUri, mode: LaunchMode.externalApplication);
       if (!opened) {
         await launchUrl(webUri, mode: LaunchMode.externalApplication);
       }
@@ -91,22 +92,14 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
     }
   }
 
-  Future<void> _copyLocation(double latitude, double longitude) async {
-    final text = '$latitude,$longitude';
-    await Clipboard.setData(ClipboardData(text: text));
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Lokasi disalin: $text')),
-    );
-  }
-
   Future<void> _simpan() async {
     if (_selectedStatus == 'Sedang Diproses' &&
         _fotoProsesXFile == null &&
         widget.laporan.fotoProses == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Foto bukti proses wajib diunggah saat status diproses'),
+          content:
+              Text('Foto bukti proses wajib diunggah saat status diproses'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -118,8 +111,7 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
         widget.laporan.fotoBukti == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content:
-              Text('Foto bukti wajib diunggah jika status Selesai'),
+          content: Text('Foto bukti wajib diunggah jika status Selesai'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -198,8 +190,7 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
               _infoRow(
                   Icons.category_outlined, 'Kategori', l.kategori ?? 'Umum'),
               _infoRow(Icons.description_outlined, 'Deskripsi', l.deskripsi),
-              _infoRow(Icons.access_time, 'Tanggal',
-                  _formatDate(l.createdAt)),
+              _infoRow(Icons.access_time, 'Tanggal', _formatDate(l.createdAt)),
               if (l.latitude != null && l.longitude != null)
                 _locationRow(l.latitude!, l.longitude!),
             ]),
@@ -238,7 +229,8 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
+                      Icon(Icons.access_time,
+                          size: 14, color: Colors.grey[600]),
                       const SizedBox(width: 6),
                       Text(
                         'Diunggah: ${_formatDate(l.fotoPengaduanAt!)}',
@@ -273,7 +265,8 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
+                      Icon(Icons.access_time,
+                          size: 14, color: Colors.grey[600]),
                       const SizedBox(width: 6),
                       Text(
                         'Diunggah: ${_formatDate(l.fotoProsesAt!)}',
@@ -308,7 +301,8 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
+                      Icon(Icons.access_time,
+                          size: 14, color: Colors.grey[600]),
                       const SizedBox(width: 6),
                       Text(
                         'Diselesaikan: ${_formatDate(l.fotoBuktiAt!)}',
@@ -347,16 +341,14 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
                         child: Row(
                           children: [
                             CircleAvatar(
-                                radius: 5,
-                                backgroundColor: _statusColor(s)),
+                                radius: 5, backgroundColor: _statusColor(s)),
                             const SizedBox(width: 8),
                             Text(s),
                           ],
                         ),
                       );
                     }).toList(),
-                    onChanged: (v) =>
-                        setState(() => _selectedStatus = v!),
+                    onChanged: (v) => setState(() => _selectedStatus = v!),
                   ),
                 ),
               ),
@@ -605,13 +597,12 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
           SizedBox(
             width: 80,
             child: Text('$label:',
-                style: const TextStyle(
-                    fontSize: 13, color: Colors.black54)),
+                style: const TextStyle(fontSize: 13, color: Colors.black54)),
           ),
           Expanded(
             child: Text(value,
-                style: const TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w500)),
+                style:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
           ),
         ],
       ),
@@ -655,14 +646,6 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
                         visualDensity: VisualDensity.compact,
                       ),
                     ),
-                    OutlinedButton.icon(
-                      onPressed: () => _copyLocation(latitude, longitude),
-                      icon: const Icon(Icons.copy_outlined, size: 16),
-                      label: const Text('Salin'),
-                      style: OutlinedButton.styleFrom(
-                        visualDensity: VisualDensity.compact,
-                      ),
-                    ),
                   ],
                 ),
               ],
@@ -676,8 +659,19 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
   String _formatDate(DateTime dt) {
     final local = dt.toLocal();
     const months = [
-      '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      '',
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember'
     ];
     return '${local.day} ${months[local.month]} ${local.year}, '
         '${local.hour.toString().padLeft(2, '0')}:'

@@ -102,7 +102,7 @@ class _ChatLaporanScreenState extends State<ChatLaporanScreen> {
     try {
       final response = await ApiService.kirimPesan(widget.laporanId, pesan);
       if (!mounted) return;
-      
+
       if (response.statusCode == 201) {
         _pesanCtrl.clear();
         await _loadPesan(silent: true);
@@ -135,13 +135,27 @@ class _ChatLaporanScreenState extends State<ChatLaporanScreen> {
   String _formatTime(DateTime dt) {
     final now = DateTime.now();
     final diff = now.difference(dt);
-    
+
     if (diff.inDays == 0) {
       return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
     } else if (diff.inDays == 1) {
       return 'Kemarin ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
     } else {
-      const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
+      const months = [
+        '',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'Mei',
+        'Jun',
+        'Jul',
+        'Agt',
+        'Sep',
+        'Okt',
+        'Nov',
+        'Des'
+      ];
       return '${dt.day} ${months[dt.month]} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
     }
   }
@@ -200,9 +214,8 @@ class _ChatLaporanScreenState extends State<ChatLaporanScreen> {
                         itemCount: _pesan.length,
                         itemBuilder: (context, index) {
                           final msg = _pesan[index];
-                          final isMyMessage =
-                              msg.pengirimRole == 'masyarakat';
-                          
+                          final isMyMessage = msg.pengirimRole == 'masyarakat';
+
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12),
                             child: Row(
@@ -225,9 +238,8 @@ class _ChatLaporanScreenState extends State<ChatLaporanScreen> {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 14, vertical: 10),
                                     decoration: BoxDecoration(
-                                      color: isMyMessage
-                                          ? _primary
-                                          : Colors.white,
+                                      color:
+                                          isMyMessage ? _primary : Colors.white,
                                       borderRadius: BorderRadius.only(
                                         topLeft: const Radius.circular(14),
                                         topRight: const Radius.circular(14),
@@ -250,7 +262,8 @@ class _ChatLaporanScreenState extends State<ChatLaporanScreen> {
                                       children: [
                                         if (!isMyMessage) ...[
                                           Text(
-                                            msg.userName ?? _roleName(msg.pengirimRole),
+                                            msg.userName ??
+                                                _roleName(msg.pengirimRole),
                                             style: TextStyle(
                                               fontSize: 11,
                                               fontWeight: FontWeight.w600,
