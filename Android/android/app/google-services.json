@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "960571187908",
+    "project_id": "skripsi-apk",
+    "storage_bucket": "skripsi-apk.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:960571187908:android:304dc275a2224369dfdf91",
+        "android_client_info": {
+          "package_name": "com.skripsi.keluhan"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXVfVCf2mTTYQUj-M0ZHlQTwCQpnzZyaU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
