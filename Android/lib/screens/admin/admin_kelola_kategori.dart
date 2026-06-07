@@ -142,6 +142,102 @@ class _AdminKelolaKategoriState extends State<AdminKelolaKategori> {
     );
   }
 
+  void _showEditDialog(Map<String, dynamic> k) {
+    final namaCtrl = TextEditingController(text: k['nama_kategori'] ?? '');
+    final deskCtrl = TextEditingController(text: k['deskripsi'] ?? '');
+    bool loading = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlg) => AlertDialog(
+          title: const Text('Edit Kategori'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: namaCtrl,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'Nama Kategori *',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: deskCtrl,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  labelText: 'Deskripsi (opsional)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: loading
+                  ? null
+                  : () async {
+                      final nama = namaCtrl.text.trim();
+                      if (nama.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Nama kategori wajib diisi')),
+                        );
+                        return;
+                      }
+                      setDlg(() => loading = true);
+                      try {
+                        final resp = await ApiService.updateKategori(
+                            k['id'], nama, deskCtrl.text.trim());
+                        if (!ctx.mounted) return;
+                        Navigator.pop(ctx);
+                        if (resp.statusCode == 200) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Kategori berhasil diperbarui'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                          _load();
+                        } else {
+                          final body = jsonDecode(resp.body);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  body['message'] ?? 'Gagal memperbarui'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        setDlg(() => loading = false);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error: $e')),
+                        );
+                      }
+                    },
+              style: ElevatedButton.styleFrom(backgroundColor: _primary),
+              child: loading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2))
+                  : const Text('Simpan',
+                      style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _hapus(Map<String, dynamic> k) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -283,11 +379,22 @@ class _AdminKelolaKategoriState extends State<AdminKelolaKategori> {
                                           fontSize: 12,
                                           color: Colors.black54))
                                   : null,
-                              trailing: IconButton(
-                                icon: const Icon(Icons.delete_outline,
-                                    color: Colors.red),
-                                onPressed: () => _hapus(k),
-                                tooltip: 'Hapus',
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit_outlined,
+                                        color: _primary),
+                                    onPressed: () => _showEditDialog(k),
+                                    tooltip: 'Edit',
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline,
+                                        color: Colors.red),
+                                    onPressed: () => _hapus(k),
+                                    tooltip: 'Hapus',
+                                  ),
+                                ],
                               ),
                             ),
                           );

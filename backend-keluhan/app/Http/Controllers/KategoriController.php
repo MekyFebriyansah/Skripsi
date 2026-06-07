@@ -21,6 +21,19 @@ class KategoriController extends Controller
         return response()->json($kategori, 201);
     }
 
+    public function update(Request $request, $id)
+    {
+        $request->validate(['nama_kategori' => 'required|string|unique:kategori_keluhan,nama_kategori,' . $id]);
+
+        $kategori = KategoriKeluhan::findOrFail($id);
+        $kategori->update($request->only('nama_kategori', 'deskripsi'));
+
+        return response()->json([
+            'message' => 'Kategori berhasil diperbarui',
+            'data' => $kategori
+        ]);
+    }
+
     public function destroy($id)
     {
         $kategori = KategoriKeluhan::findOrFail($id);

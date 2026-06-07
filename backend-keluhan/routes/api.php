@@ -28,8 +28,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/laporan', [LaporanController::class, 'store'])
          ->middleware('role:masyarakat');
 
+    Route::post('/laporan/saya/{id}', [LaporanController::class, 'updateSaya'])
+         ->middleware('role:masyarakat');
+
     Route::get('/laporan/saya', [LaporanController::class, 'index'])
          ->middleware('role:masyarakat');
+
+    // Hapus Laporan (Bisa Admin atau Masyarakat)
+    Route::delete('/laporan/{id}', [LaporanController::class, 'destroy']);
 
     // Admin, Sekretaris, Kepala Desa
     Route::middleware('role:admin,sekretaris,kepala_desa')->group(function () {
@@ -46,6 +52,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Admin only
     Route::middleware('role:admin')->group(function () {
         Route::post('/kategori', [KategoriController::class, 'store']);
+        Route::put('/kategori/{id}', [KategoriController::class, 'update']);
         Route::delete('/kategori/{id}', [KategoriController::class, 'destroy']);
         Route::get('/users', [UserController::class, 'index']);
         Route::put('/users/{id}/toggle-status', [UserController::class, 'toggleStatus']);

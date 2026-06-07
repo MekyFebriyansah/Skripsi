@@ -4,9 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../services/api_service.dart';
+import '../../models/laporan_model.dart';
+import 'package:http/http.dart' as http;
 
 class PengaduanForm extends StatefulWidget {
-  const PengaduanForm({super.key});
+  final LaporanModel? laporanToEdit;
+
+  const PengaduanForm({super.key, this.laporanToEdit});
 
   @override
   State<PengaduanForm> createState() => _PengaduanFormState();
@@ -33,6 +37,26 @@ class _PengaduanFormState extends State<PengaduanForm> {
   void initState() {
     super.initState();
     _loadKategori();
+    
+    if (widget.laporanToEdit != null) {
+      final l = widget.laporanToEdit!;
+      _judulCtrl.text = l.judul;
+      _deskripsiCtrl.text = l.deskripsi;
+      if (l.latitude != null && l.longitude != null) {
+        _posisi = Position(
+          latitude: l.latitude!,
+          longitude: l.longitude!,
+          timestamp: DateTime.now(),
+          accuracy: 0.0,
+          altitude: 0.0,
+          heading: 0.0,
+          speed: 0.0,
+          speedAccuracy: 0.0,
+          altitudeAccuracy: 0.0,
+          headingAccuracy: 0.0,
+        );
+      }
+    }
   }
 
   @override
@@ -49,6 +73,18 @@ class _PengaduanFormState extends State<PengaduanForm> {
       setState(() {
         _kategoriList = data.cast<Map<String, dynamic>>();
         _loadingKategori = false;
+
+        // Auto-select kategori if editing
+        if (widget.laporanToEdit != null && widget.laporanToEdit!.kategori != null) {
+          final matched = _kategoriList.firstWhere(
+            (k) => k['nama_kategori'] == widget.laporanToEdit!.kategori,
+            orElse: () => {},
+          );
+          if (matched.isNotEmpty) {
+            _selectedKategoriId = matched['id'];
+            _selectedKategoriNama = matched['nama_kategori'];
+          }
+        }
       });
     } catch (_) {
       if (mounted) setState(() => _loadingKategori = false);
@@ -116,22 +152,37 @@ class _PengaduanFormState extends State<PengaduanForm> {
 
     setState(() => _isLoading = true);
     try {
-      final resp = await ApiService.createLaporan(
-        judul: _judulCtrl.text.trim(),
-        kategoriId: _selectedKategoriId!,
-        deskripsi: _deskripsiCtrl.text.trim(),
-        latitude: _posisi?.latitude,
-        longitude: _posisi?.longitude,
-        fotoPengaduan: kIsWeb ? _fotoXFile : _foto,
-      );
+      final isEdit = widget.laporanToEdit != null;
+      final http.Response resp;
+
+      if (isEdit) {
+        resp = await ApiService.updateLaporanUser(
+          widget.laporanToEdit!.id,
+          judul: _judulCtrl.text.trim(),
+          kategoriId: _selectedKategoriId!,
+          deskripsi: _deskripsiCtrl.text.trim(),
+          latitude: _posisi?.latitude,
+          longitude: _posisi?.longitude,
+          fotoPengaduan: kIsWeb ? _fotoXFile : _foto,
+        );
+      } else {
+        resp = await ApiService.createLaporan(
+          judul: _judulCtrl.text.trim(),
+          kategoriId: _selectedKategoriId!,
+          deskripsi: _deskripsiCtrl.text.trim(),
+          latitude: _posisi?.latitude,
+          longitude: _posisi?.longitude,
+          fotoPengaduan: kIsWeb ? _fotoXFile : _foto,
+        );
+      }
 
       if (!mounted) return;
-      if (resp.statusCode == 201) {
-        _snackbar('Pengaduan berhasil dikirim!');
+      if (resp.statusCode == 201 || resp.statusCode == 200) {
+        _snackbar(isEdit ? 'Pengaduan berhasil diperbarui!' : 'Pengaduan berhasil dikirim!');
         Navigator.pop(context, true);
       } else {
         _snackbar(ApiService.errorMessage(resp,
-            fallback: 'Gagal mengirim pengaduan'), isError: true);
+            fallback: isEdit ? 'Gagal memperbarui pengaduan' : 'Gagal mengirim pengaduan'), isError: true);
       }
     } catch (e) {
       if (mounted) _snackbar('Koneksi error: $e', isError: true);
@@ -154,7 +205,7 @@ class _PengaduanFormState extends State<PengaduanForm> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text('Buat Pengaduan'),
+        title: Text(widget.laporanToEdit != null ? 'Edit Pengaduan' : 'Buat Pengaduan'),
         backgroundColor: _primary,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -394,7 +445,9 @@ class _PengaduanFormState extends State<PengaduanForm> {
                               color: Colors.white, strokeWidth: 2))
                       : const Icon(Icons.send_rounded),
                   label: Text(
-                    _isLoading ? 'Mengirim...' : 'KIRIM PENGADUAN',
+                    _isLoading 
+                      ? 'Menyimpan...' 
+                      : (widget.laporanToEdit != null ? 'SIMPAN PERUBAHAN' : 'KIRIM PENGADUAN'),
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.bold),
                   ),

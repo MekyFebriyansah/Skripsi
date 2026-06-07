@@ -231,6 +231,54 @@ class ApiService {
     return response;
   }
 
+  static Future<http.Response> updateLaporanUser(
+    int id, {
+    required String judul,
+    required int kategoriId,
+    required String deskripsi,
+    double? latitude,
+    double? longitude,
+    dynamic fotoPengaduan, // Support File (mobile) or XFile (cross-platform)
+  }) async {
+    final url = Uri.parse("$baseUrl/laporan/saya/$id");
+    var request = http.MultipartRequest('POST', url);
+    request.headers.addAll(await getHeaders(multipart: true));
+
+    request.fields['_method'] = 'PUT'; // spoofing for Laravel
+    request.fields['judul'] = judul;
+    request.fields['kategori_id'] = kategoriId.toString();
+    request.fields['deskripsi'] = deskripsi;
+    if (latitude != null) request.fields['latitude'] = latitude.toString();
+    if (longitude != null) request.fields['longitude'] = longitude.toString();
+
+    if (fotoPengaduan != null) {
+      if (fotoPengaduan is XFile) {
+        final bytes = await fotoPengaduan.readAsBytes();
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'foto_pengaduan',
+            bytes,
+            filename: fotoPengaduan.name,
+          ),
+        );
+      } else if (fotoPengaduan is File) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+              'foto_pengaduan', fotoPengaduan.path),
+        );
+      }
+    }
+
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
+    _log("PUT (multipart)", "/laporan/saya/$id", response);
+    return response;
+  }
+
+  static Future<http.Response> deleteLaporan(int id) async {
+    return delete('/laporan/$id');
+  }
+
   static Future<http.Response> createLaporan({
     required String judul,
     required int kategoriId,
@@ -300,6 +348,14 @@ class ApiService {
 
   static Future<http.Response> deleteKategori(int id) async {
     return await delete('/kategori/$id');
+  }
+
+  static Future<http.Response> updateKategori(
+      int id, String namaKategori, String? deskripsi) async {
+    return await put('/kategori/$id', {
+      'nama_kategori': namaKategori,
+      if (deskripsi != null && deskripsi.isNotEmpty) 'deskripsi': deskripsi,
+    });
   }
 
   // ──────────────── USERS (admin) ────────────────

@@ -151,6 +151,49 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
     }
   }
 
+  Future<void> _hapusPengaduan() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus Pengaduan?'),
+        content: const Text('Tindakan ini tidak dapat dibatalkan. Pengaduan beserta fotonya akan dihapus secara permanen.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ya, Hapus', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      )
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final resp = await ApiService.deleteLaporan(widget.laporan.id);
+      if (!mounted) return;
+      if (resp.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Pengaduan berhasil dihapus'), backgroundColor: Colors.green),
+        );
+        Navigator.pop(context, true); // true agar halaman sebelumnya refresh data
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menghapus: ${resp.body}'), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = widget.laporan;
@@ -162,6 +205,11 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          IconButton(
+            onPressed: _hapusPengaduan,
+            icon: const Icon(Icons.delete_outline),
+            tooltip: 'Hapus Pengaduan',
+          ),
           IconButton(
             onPressed: () {
               Navigator.push(

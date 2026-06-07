@@ -2,12 +2,19 @@ import 'package:flutter/material.dart';
 import '../../models/laporan_model.dart';
 import '../../services/api_service.dart';
 import 'chat_laporan_screen.dart';
+import 'pengaduan_form.dart';
 
-class UserLaporanDetail extends StatelessWidget {
+class UserLaporanDetail extends StatefulWidget {
   final LaporanModel laporan;
   const UserLaporanDetail({super.key, required this.laporan});
 
+  @override
+  State<UserLaporanDetail> createState() => _UserLaporanDetailState();
+}
+
+class _UserLaporanDetailState extends State<UserLaporanDetail> {
   static const _primary = Color(0xFF1565C0);
+  bool _isLoading = false;
 
   Color _statusColor(String s) {
     switch (s) {
@@ -42,8 +49,52 @@ class UserLaporanDetail extends StatelessWidget {
         '${local.minute.toString().padLeft(2, '0')}';
   }
 
+  Future<void> _hapusPengaduan() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus Pengaduan?'),
+        content: const Text('Tindakan ini tidak dapat dibatalkan. Pengaduan beserta fotonya akan dihapus secara permanen.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ya, Hapus', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      )
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final resp = await ApiService.deleteLaporan(widget.laporan.id);
+      if (!mounted) return;
+      if (resp.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Pengaduan berhasil dihapus'), backgroundColor: Colors.green),
+        );
+        Navigator.pop(context, true); // true agar halaman sebelumnya refresh data
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menghapus: ${resp.body}'), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final laporan = widget.laporan;
     final color = _statusColor(laporan.status);
 
     return Scaffold(
@@ -54,6 +105,26 @@ class UserLaporanDetail extends StatelessWidget {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          if (laporan.status == 'Belum Ditangani') ...[
+            IconButton(
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => PengaduanForm(laporanToEdit: laporan)),
+                );
+                if (result == true && mounted) {
+                  Navigator.pop(context, true);
+                }
+              },
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Edit Pengaduan',
+            ),
+            IconButton(
+              onPressed: _isLoading ? null : _hapusPengaduan,
+              icon: const Icon(Icons.delete_outline),
+              tooltip: 'Hapus Pengaduan',
+            ),
+          ],
           IconButton(
             onPressed: () {
               Navigator.push(

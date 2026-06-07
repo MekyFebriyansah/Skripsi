@@ -145,4 +145,98 @@ class LaporanController extends Controller
             'data'    => $laporan->load(['user', 'kategori'])
         ]);
     }
+
+    public function updateSaya(Request $request, $id)
+    {
+        $laporan = LaporanKeluhan::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+
+        if ($laporan->status !== 'Belum Ditangani') {
+            return response()->json([
+                'message' => 'Pengaduan yang sudah ditangani tidak dapat diubah.'
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'judul'        => 'required|string|max:255',
+            'kategori_id'  => 'required|exists:kategori_keluhan,id',
+            'deskripsi'    => 'required|string',
+            'latitude'     => 'nullable|numeric',
+            'longitude'    => 'nullable|numeric',
+            'foto_pengaduan' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validasi gagal',
+                'errors'  => $validator->errors()
+            ], 422);
+        }
+
+        $kategori = KategoriKeluhan::findOrFail($request->kategori_id);
+
+        $data = [
+            'kategori_id' => $request->kategori_id,
+            'kategori'    => $kategori->nama_kategori,
+            'judul'       => $request->judul,
+            'deskripsi'   => $request->deskripsi,
+            'latitude'    => $request->latitude,
+            'longitude'   => $request->longitude,
+        ];
+
+        if ($request->hasFile('foto_pengaduan')) {
+            if ($laporan->foto_pengaduan && Storage::disk('public')->exists($laporan->foto_pengaduan)) {
+                Storage::disk('public')->delete($laporan->foto_pengaduan);
+            }
+
+            $file = $request->file('foto_pengaduan');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $data['foto_pengaduan'] = $file->storeAs('laporan_pengaduan', $filename, 'public');
+            $data['foto_pengaduan_at'] = now();
+        }
+
+        $laporan->update($data);
+
+        return response()->json([
+            'message' => 'Pengaduan berhasil diperbarui',
+            'data'    => $laporan->load('kategori')
+        ]);
+    }
+
+    public function destroy($id)
+    {
+        $laporan = LaporanKeluhan::findOrFail($id);
+        $user = Auth::user();
+
+        // Cek izin (Admin boleh hapus semua, Masyarakat hanya miliknya & jika Belum Ditangani)
+        if ($user->role === 'masyarakat') {
+            if ($laporan->user_id !== $user->id) {
+                return response()->json(['message' => 'Anda tidak memiliki akses untuk menghapus laporan ini.'], 403);
+            }
+            if ($laporan->status !== 'Belum Ditangani') {
+                return response()->json(['message' => 'Laporan yang sudah ditangani tidak dapat dihapus.'], 403);
+            }
+        } elseif ($user->role !== 'admin') {
+            // Sekretaris & Kades mungkin tidak boleh hapus
+            return response()->json(['message' => 'Anda tidak memiliki izin menghapus laporan.'], 403);
+        }
+
+        // Hapus foto jika ada
+        if ($laporan->foto_pengaduan && Storage::disk('public')->exists($laporan->foto_pengaduan)) {
+            Storage::disk('public')->delete($laporan->foto_pengaduan);
+        }
+        if ($laporan->foto_proses && Storage::disk('public')->exists($laporan->foto_proses)) {
+            Storage::disk('public')->delete($laporan->foto_proses);
+        }
+        if ($laporan->foto_bukti && Storage::disk('public')->exists($laporan->foto_bukti)) {
+            Storage::disk('public')->delete($laporan->foto_bukti);
+        }
+
+        // Hapus data pesan (chat) jika ada relasi on delete cascade belum diset
+        // Kita biarkan saja database cascade atau abaikan untuk tutorial jika belum ada relasi delete cascade.
+        // Sebaiknya dihapus juga.
+        
+        $laporan->delete();
+
+        return response()->json(['message' => 'Laporan berhasil dihapus']);
+    }
 }
