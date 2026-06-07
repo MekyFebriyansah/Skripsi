@@ -80,8 +80,9 @@ class AuthController extends Controller
     {
         try {
             $credentials = $request->validate([
-                'nik_or_hp' => 'required|string',
-                'password'  => 'required|string',
+                'nik_or_hp'   => 'required|string',
+                'password'    => 'required|string',
+                'force_login' => 'sometimes|boolean',
             ]);
 
             $user = User::where('nik', $credentials['nik_or_hp'])
@@ -99,6 +100,21 @@ class AuthController extends Controller
                 return response()->json([
                     'message' => 'Akun Anda sedang dinonaktifkan. Silakan hubungi admin desa.'
                 ], 403);
+            }
+
+            // Batasi 1 akun 1 perangkat
+            $forceLogin = $request->input('force_login', false);
+            
+            if ($user->tokens()->count() > 0) {
+                if (!$forceLogin) {
+                    return response()->json([
+                        'message' => 'Akun sedang digunakan di perangkat lain.',
+                        'requires_force_login' => true
+                    ], 403);
+                } else {
+                    // Hapus token lama (logout perangkat lain secara paksa)
+                    $user->tokens()->delete();
+                }
             }
 
             $token = $user->createToken('auth_token')->plainTextToken;

@@ -80,16 +80,14 @@ class _PemerintahDashboardState extends State<PemerintahDashboard> {
       body: IndexedStack(index: _selectedIndex, children: _pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
-        onDestinationSelected: (i) =>
-            setState(() => _selectedIndex = i),
+        onDestinationSelected: (i) => setState(() => _selectedIndex = i),
         backgroundColor: Colors.white,
         indicatorColor: _primaryColor.withOpacity(0.12),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: [
           const NavigationDestination(
             icon: Icon(Icons.analytics_outlined),
-            selectedIcon:
-                Icon(Icons.analytics, color: _primaryColor),
+            selectedIcon: Icon(Icons.analytics, color: _primaryColor),
             label: 'Rekap',
           ),
           NavigationDestination(

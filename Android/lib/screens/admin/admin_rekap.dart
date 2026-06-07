@@ -356,22 +356,24 @@ class _AdminRekapState extends State<AdminRekap> {
               child: Icon(icon, color: color, size: 24),
             ),
             const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$value',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: color,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$value',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
                   ),
-                ),
-                Text(
-                  label,
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
-                ),
-              ],
+                  Text(
+                    label,
+                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

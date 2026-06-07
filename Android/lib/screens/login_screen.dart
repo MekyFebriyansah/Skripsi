@@ -32,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _login() async {
+  Future<void> _login({bool forceLogin = false}) async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
@@ -41,6 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final response = await ApiService.post('/login', {
         'nik_or_hp': _identifierController.text.trim(),
         'password': _passwordController.text,
+        if (forceLogin) 'force_login': true,
       });
 
       final data = response.body.isNotEmpty
@@ -79,14 +80,43 @@ class _LoginScreenState extends State<LoginScreen> {
         }
 
       } else {
-        _showSnackBar(ApiService.errorMessage(response,
-            fallback: 'Login gagal'), isError: true);
+        if (response.statusCode == 403 && data['requires_force_login'] == true) {
+          _showForceLoginDialog();
+        } else {
+          _showSnackBar(ApiService.errorMessage(response,
+              fallback: 'Login gagal'), isError: true);
+        }
       }
     } catch (e) {
       _showSnackBar('Koneksi gagal: $e', isError: true);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _showForceLoginDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Akun Sedang Digunakan'),
+        content: const Text(
+            'Akun ini sedang aktif di perangkat lain.\nApakah Anda ingin mengeluarkan perangkat tersebut secara paksa dan masuk di perangkat ini?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(ctx);
+              _login(forceLogin: true);
+            },
+            child: const Text('Ya, Paksa Keluar', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showSnackBar(String message, {bool isError = false}) {

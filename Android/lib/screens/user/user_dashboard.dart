@@ -81,8 +81,8 @@ class _UserDashboardState extends State<UserDashboard> {
             const Text('Halo,',
                 style: TextStyle(fontSize: 13, color: Colors.white70)),
             Text(_namaUser,
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold)),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ],
         ),
         actions: [
@@ -135,10 +135,8 @@ class _UserDashboardState extends State<UserDashboard> {
             width: double.infinity,
             height: 52,
             child: ElevatedButton.icon(
-              onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const PengaduanForm()))
+              onPressed: () => Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const PengaduanForm()))
                   .then((_) => _load()),
               icon: const Icon(Icons.add_circle_outline, size: 22),
               label: const Text('BUAT PENGADUAN BARU',
@@ -164,21 +162,33 @@ class _UserDashboardState extends State<UserDashboard> {
         children: [
           Row(
             children: [
-              _statCard('Total', _total, Icons.assignment_rounded,
+              _statCard('Total Laporan Anda', _total, Icons.assignment_rounded,
                   const Color(0xFF1565C0), const Color(0xFFE3F2FD)),
               const SizedBox(width: 12),
-              _statCard('Selesai', _selesai, Icons.check_circle_rounded,
-                  const Color(0xFF2E7D32), const Color(0xFFE8F5E9)),
+              _statCard(
+                  'Laporan Selesai Ditangani',
+                  _selesai,
+                  Icons.check_circle_rounded,
+                  const Color(0xFF2E7D32),
+                  const Color(0xFFE8F5E9)),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              _statCard('Diproses', _proses, Icons.hourglass_bottom_rounded,
-                  const Color(0xFFE65100), const Color(0xFFFFF3E0)),
+              _statCard(
+                  'Laporan Sedang Diproses',
+                  _proses,
+                  Icons.hourglass_bottom_rounded,
+                  const Color(0xFFE65100),
+                  const Color(0xFFFFF3E0)),
               const SizedBox(width: 12),
-              _statCard('Belum', _belum, Icons.pending_rounded,
-                  const Color(0xFFC62828), const Color(0xFFFFEBEE)),
+              _statCard(
+                  'Laporan Belum Ditangani',
+                  _belum,
+                  Icons.pending_rounded,
+                  const Color(0xFFC62828),
+                  const Color(0xFFFFEBEE)),
             ],
           ),
         ],
@@ -210,18 +220,20 @@ class _UserDashboardState extends State<UserDashboard> {
               child: Icon(icon, color: color, size: 22),
             ),
             const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('$value',
-                    style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: color)),
-                Text(label,
-                    style: const TextStyle(
-                        fontSize: 11, color: Colors.black54)),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('$value',
+                      style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: color)),
+                  Text(label,
+                      style:
+                          const TextStyle(fontSize: 11, color: Colors.black54)),
+                ],
+              ),
             ),
           ],
         ),
@@ -239,8 +251,7 @@ class _UserDashboardState extends State<UserDashboard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Pengaduan Terbaru',
-                  style: TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold)),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               TextButton(
                 onPressed: () => Navigator.push(context,
                     MaterialPageRoute(builder: (_) => const UserRiwayat())),
@@ -259,8 +270,7 @@ class _UserDashboardState extends State<UserDashboard> {
               ),
               child: Column(
                 children: [
-                  Icon(Icons.inbox_outlined,
-                      size: 56, color: Colors.grey[300]),
+                  Icon(Icons.inbox_outlined, size: 56, color: Colors.grey[300]),
                   const SizedBox(height: 12),
                   const Text('Belum ada pengaduan',
                       style: TextStyle(color: Colors.grey)),
@@ -293,12 +303,11 @@ class _UserDashboardState extends State<UserDashboard> {
                   ],
                 ),
                 child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 4),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   leading: CircleAvatar(
                     backgroundColor: color.withOpacity(0.12),
-                    child: Icon(Icons.report_rounded,
-                        color: color, size: 20),
+                    child: Icon(Icons.report_rounded, color: color, size: 20),
                   ),
                   title: Text(l.judul,
                       maxLines: 1,
@@ -308,8 +317,8 @@ class _UserDashboardState extends State<UserDashboard> {
                   subtitle: Text(l.kategori ?? 'Umum',
                       style: const TextStyle(fontSize: 12)),
                   trailing: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: color.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(20),
@@ -323,8 +332,7 @@ class _UserDashboardState extends State<UserDashboard> {
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (_) =>
-                            UserLaporanDetail(laporan: l)),
+                        builder: (_) => UserLaporanDetail(laporan: l)),
                   ).then((_) => _load()),
                 ),
               );

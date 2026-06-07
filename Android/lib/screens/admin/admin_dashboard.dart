@@ -166,21 +166,37 @@ class _AdminDashboardState extends State<AdminDashboard> {
         children: [
           Row(
             children: [
-              _statCard('Total', _total, Icons.assignment_rounded,
-                  const Color(0xFF1565C0), const Color(0xFFE3F2FD)),
+              _statCard(
+                  'Total Laporan Masyarakat',
+                  _total,
+                  Icons.assignment_rounded,
+                  const Color(0xFF1565C0),
+                  const Color(0xFFE3F2FD)),
               const SizedBox(width: 12),
-              _statCard('Selesai', _selesai, Icons.check_circle_rounded,
-                  const Color(0xFF2E7D32), const Color(0xFFE8F5E9)),
+              _statCard(
+                  'Laporan Selesai Ditangani',
+                  _selesai,
+                  Icons.check_circle_rounded,
+                  const Color(0xFF2E7D32),
+                  const Color(0xFFE8F5E9)),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              _statCard('Diproses', _proses, Icons.hourglass_bottom_rounded,
-                  const Color(0xFFE65100), const Color(0xFFFFF3E0)),
+              _statCard(
+                  'Laporan Sedang Diproses',
+                  _proses,
+                  Icons.hourglass_bottom_rounded,
+                  const Color(0xFFE65100),
+                  const Color(0xFFFFF3E0)),
               const SizedBox(width: 12),
-              _statCard('Belum', _belum, Icons.warning_amber_rounded,
-                  const Color(0xFFC62828), const Color(0xFFFFEBEE)),
+              _statCard(
+                  'Laporan Belum Ditangani',
+                  _belum,
+                  Icons.warning_amber_rounded,
+                  const Color(0xFFC62828),
+                  const Color(0xFFFFEBEE)),
             ],
           ),
         ],
@@ -212,18 +228,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
               child: Icon(icon, color: color, size: 24),
             ),
             const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('$value',
-                    style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: color)),
-                Text(label,
-                    style:
-                        const TextStyle(fontSize: 12, color: Colors.black54)),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('$value',
+                      style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: color)),
+                  Text(label,
+                      style:
+                          const TextStyle(fontSize: 12, color: Colors.black54)),
+                ],
+              ),
             ),
           ],
         ),
