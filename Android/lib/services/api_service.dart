@@ -16,7 +16,7 @@ class ApiService {
   // Cek IP dengan: `ipconfig` di Windows -> ambil IPv4 dari Wi-Fi.
   // Pastikan HP & laptop terhubung Wi-Fi yang SAMA, dan Laragon di-set
   // listen di 0.0.0.0:8000 (bukan hanya 127.0.0.1).
-  static const _lanHost = '192.168.1.20';
+  static const _lanHost = '192.168.55.106';
   static const _port = 8000;
 
   static String get baseUrl {
@@ -34,11 +34,11 @@ class ApiService {
       // Default-nya kita pakai IP LAN supaya jalan di HP fisik (kasus utama).
       const isEmu = bool.fromEnvironment('ANDROID_EMU', defaultValue: false);
       if (isEmu) return "http://10.0.2.2:$_port/api";
-      return "http://$_lanHost:$_port/api";
+      return "http://${_lanHost[0]}:$_port/api";
     }
 
-    if (Platform.isIOS) return "http://$_lanHost:$_port/api";
-    return "http://$_lanHost:$_port/api";
+    if (Platform.isIOS) return "http://${_lanHost[0]}:$_port/api";
+    return "http://${_lanHost[0]}:$_port/api";
   }
 
   // ──────────────── TOKEN & USER DATA ────────────────
@@ -123,11 +123,13 @@ class ApiService {
   static Future<http.Response> post(
       String endpoint, Map<String, dynamic> body) async {
     final url = Uri.parse("$baseUrl$endpoint");
-    final response = await http.post(
-      url,
-      headers: await getHeaders(),
-      body: jsonEncode(body),
-    ).timeout(_timeout);
+    final response = await http
+        .post(
+          url,
+          headers: await getHeaders(),
+          body: jsonEncode(body),
+        )
+        .timeout(_timeout);
     _log("POST", endpoint, response);
     return response;
   }
@@ -135,11 +137,13 @@ class ApiService {
   static Future<http.Response> put(
       String endpoint, Map<String, dynamic> body) async {
     final url = Uri.parse("$baseUrl$endpoint");
-    final response = await http.put(
-      url,
-      headers: await getHeaders(),
-      body: jsonEncode(body),
-    ).timeout(_timeout);
+    final response = await http
+        .put(
+          url,
+          headers: await getHeaders(),
+          body: jsonEncode(body),
+        )
+        .timeout(_timeout);
     _log("PUT", endpoint, response);
     return response;
   }
@@ -254,7 +258,7 @@ class ApiService {
     request.fields['deskripsi'] = deskripsi;
     if (latitude != null) request.fields['latitude'] = latitude.toString();
     if (longitude != null) request.fields['longitude'] = longitude.toString();
-    
+
     if (fotoPengaduan is XFile) {
       final bytes = await fotoPengaduan.readAsBytes();
       request.files.add(

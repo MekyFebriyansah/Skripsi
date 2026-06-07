@@ -136,8 +136,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextFormField(
                   controller: _nameController,
                   textInputAction: TextInputAction.next,
-                  decoration: _inputDecoration(
-                      "Nama Lengkap", Icons.person_outline),
+                  decoration:
+                      _inputDecoration("Nama Lengkap", Icons.person_outline),
                   validator: (v) =>
                       v == null || v.trim().isEmpty ? "Wajib diisi" : null),
               const SizedBox(height: 16),
@@ -161,8 +161,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _noHpController,
                   keyboardType: TextInputType.phone,
                   textInputAction: TextInputAction.next,
-                  decoration:
-                      _inputDecoration("No. HP", Icons.phone_outlined),
+                  decoration: _inputDecoration("No. HP", Icons.phone_outlined),
                   validator: (v) {
                     final value = v?.trim() ?? '';
                     if (value.isEmpty) return "Wajib diisi";
@@ -174,8 +173,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
-                  decoration:
-                      _inputDecoration("Email (opsional)", Icons.email_outlined),
+                  decoration: _inputDecoration("Email", Icons.email_outlined),
                   validator: (v) {
                     final value = v?.trim() ?? '';
                     if (value.isEmpty) return null;
@@ -196,8 +194,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       icon: Icon(_obscurePassword
                           ? Icons.visibility
                           : Icons.visibility_off),
-                      onPressed: () => setState(
-                          () => _obscurePassword = !_obscurePassword),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
                   validator: (v) {
@@ -219,8 +217,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ? Icons.visibility
                           : Icons.visibility_off),
                       onPressed: () => setState(() =>
-                          _obscureConfirmPassword =
-                              !_obscureConfirmPassword),
+                          _obscureConfirmPassword = !_obscureConfirmPassword),
                     ),
                   ),
                   validator: (v) {

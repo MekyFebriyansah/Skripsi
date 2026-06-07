@@ -127,7 +127,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
           children: [
             const Icon(Icons.wifi_off, size: 64, color: Colors.grey),
             const SizedBox(height: 16),
-            Text('Gagal memuat data', style: TextStyle(color: Colors.grey[700])),
+            Text('Gagal memuat data',
+                style: TextStyle(color: Colors.grey[700])),
             const SizedBox(height: 8),
             ElevatedButton.icon(
               onPressed: _load,
@@ -206,8 +207,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
           children: [
             Container(
               padding: const EdgeInsets.all(10),
-              decoration:
-                  BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(
+                  color: bg, borderRadius: BorderRadius.circular(12)),
               child: Icon(icon, color: color, size: 24),
             ),
             const SizedBox(width: 12),
@@ -242,20 +243,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
           Row(
             children: [
               _quickBtn(context, 'Semua\nLaporan', Icons.list_alt_rounded,
-                  const Color(0xFF1565C0),
-                  const LaporanListScreen()),
+                  const Color(0xFF1565C0), const LaporanListScreen()),
               const SizedBox(width: 10),
               _quickBtn(context, 'Kelola\nKategori', Icons.category_rounded,
-                  const Color(0xFF6A1B9A),
-                  const AdminKelolaKategori()),
+                  const Color(0xFF6A1B9A), const AdminKelolaKategori()),
               const SizedBox(width: 10),
               _quickBtn(context, 'Pengguna', Icons.people_alt_rounded,
-                  const Color(0xFF00695C),
-                  const AdminManajemenPengguna()),
+                  const Color(0xFF00695C), const AdminManajemenPengguna()),
               const SizedBox(width: 10),
               _quickBtn(context, 'Rekap', Icons.bar_chart_rounded,
-                  const Color(0xFFE65100),
-                  const AdminRekap()),
+                  const Color(0xFFE65100), const AdminRekap()),
             ],
           ),
         ],
@@ -267,8 +264,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
       Color color, Widget page) {
     return Expanded(
       child: GestureDetector(
-        onTap: () => Navigator.push(
-            context, MaterialPageRoute(builder: (_) => page)),
+        onTap: () =>
+            Navigator.push(context, MaterialPageRoute(builder: (_) => page)),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
@@ -283,9 +280,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               Text(label,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: color)),
+                      fontSize: 10, fontWeight: FontWeight.w600, color: color)),
             ],
           ),
         ),
@@ -303,10 +298,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Laporan Terbaru',
-                  style:
-                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               TextButton(
-                onPressed: () => Navigator.push(context,
+                onPressed: () => Navigator.push(
+                    context,
                     MaterialPageRoute(
                         builder: (_) => const LaporanListScreen())),
                 child: const Text('Lihat Semua'),
@@ -355,8 +350,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       '${l.kategori ?? "Umum"} • ${l.namaUser ?? "—"}',
                       style: const TextStyle(fontSize: 12)),
                   trailing: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: color.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(20),

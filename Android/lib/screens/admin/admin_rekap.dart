@@ -1,8 +1,12 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import '../../services/api_service.dart';
+import '../../services/file_download_helper.dart';
 import '../../models/laporan_model.dart';
-import 'admin_export.dart';
 
 class AdminRekap extends StatefulWidget {
   const AdminRekap({super.key});
@@ -15,8 +19,10 @@ class _AdminRekapState extends State<AdminRekap> {
   static const _primary = Color(0xFF0D47A1);
 
   bool _isLoading = true;
+  bool _isDownloading = false;
   String? _error;
   int _total = 0, _selesai = 0, _proses = 0, _belum = 0;
+  List<LaporanModel> _laporan = [];
   Map<String, int> _perKategori = {};
   Map<String, int> _perBulan = {};
 
@@ -47,10 +53,8 @@ class _AdminRekapState extends State<AdminRekap> {
         perBulan[key] = (perBulan[key] ?? 0) + 1;
       }
 
-      // Urutkan per bulan ascending dan ambil 6 bulan terakhir
       final sortedBulan = Map.fromEntries(
-        perBulan.entries.toList()
-          ..sort((a, b) => a.key.compareTo(b.key)),
+        perBulan.entries.toList()..sort((a, b) => a.key.compareTo(b.key)),
       );
       final bulan6 = sortedBulan.entries.toList();
       final startIdx = bulan6.length > 6 ? bulan6.length - 6 : 0;
@@ -58,6 +62,7 @@ class _AdminRekapState extends State<AdminRekap> {
 
       if (!mounted) return;
       setState(() {
+        _laporan = list;
         _total = list.length;
         _selesai = list.where((l) => l.status == 'Selesai').length;
         _proses = list.where((l) => l.status == 'Sedang Diproses').length;
@@ -75,6 +80,151 @@ class _AdminRekapState extends State<AdminRekap> {
     }
   }
 
+  Future<void> _downloadRekapPdf() async {
+    if (_laporan.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Belum ada laporan untuk didownload')),
+      );
+      return;
+    }
+
+    setState(() => _isDownloading = true);
+    try {
+      final pdfBytes = await _buildRekapPdf();
+      final fileName =
+          'rekap_admin_pengaduan_${DateTime.now().millisecondsSinceEpoch}.pdf';
+
+      final savedPath = await downloadFileBytes(
+        fileName: fileName,
+        bytes: pdfBytes,
+        mimeType: 'application/pdf',
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('PDF berhasil didownload: $savedPath')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal download rekap: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isDownloading = false);
+    }
+  }
+
+  Future<Uint8List> _buildRekapPdf() async {
+    final grouped = <String, List<LaporanModel>>{};
+    for (final laporan in _laporan) {
+      final kategori = laporan.kategori ?? 'Lainnya';
+      grouped.putIfAbsent(kategori, () => []).add(laporan);
+    }
+
+    final kategoriKeys = grouped.keys.toList()..sort();
+    final doc = pw.Document();
+
+    doc.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(24),
+        build: (context) {
+          return [
+            pw.Text(
+              'Rekap Pengaduan Masyarakat — Admin',
+              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.SizedBox(height: 4),
+            pw.Text('Tanggal Export: ${_formatDate(DateTime.now())}'),
+            pw.Text(
+              'Ringkasan: Total $_total | Selesai $_selesai | '
+              'Diproses $_proses | Belum $_belum',
+            ),
+            pw.SizedBox(height: 16),
+            for (final kategori in kategoriKeys) ...[
+              _buildKategoriPdfSection(kategori, grouped[kategori]!),
+              pw.SizedBox(height: 18),
+            ],
+          ];
+        },
+      ),
+    );
+
+    return doc.save();
+  }
+
+  pw.Widget _buildKategoriPdfSection(
+      String kategori, List<LaporanModel> laporan) {
+    final items = [...laporan]
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Container(
+          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+          decoration: pw.BoxDecoration(
+            color: PdfColors.blue100,
+            borderRadius: pw.BorderRadius.circular(4),
+          ),
+          child: pw.Text(
+            'Kategori: $kategori (${items.length} laporan)',
+            style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+          ),
+        ),
+        pw.SizedBox(height: 8),
+        pw.Table.fromTextArray(
+          border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
+          headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
+          headerStyle:
+              pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8),
+          cellStyle: const pw.TextStyle(fontSize: 7),
+          cellAlignment: pw.Alignment.topLeft,
+          headerAlignment: pw.Alignment.centerLeft,
+          columnWidths: {
+            0: const pw.FixedColumnWidth(22),
+            1: const pw.FlexColumnWidth(1.6),
+            2: const pw.FlexColumnWidth(1.1),
+            3: const pw.FlexColumnWidth(1.2),
+            4: const pw.FlexColumnWidth(1.2),
+            5: const pw.FlexColumnWidth(1.2),
+            6: const pw.FlexColumnWidth(1.2),
+            7: const pw.FlexColumnWidth(2),
+            8: const pw.FlexColumnWidth(1.6),
+          },
+          headers: [
+            'No',
+            'Judul',
+            'Status',
+            'Pelapor',
+            'NIK',
+            'No HP',
+            'Tanggal',
+            'Deskripsi',
+            'Lokasi',
+          ],
+          data: List.generate(items.length, (index) {
+            final l = items[index];
+            final lokasi = l.latitude != null && l.longitude != null
+                ? '${l.latitude}, ${l.longitude}'
+                : '-';
+            return [
+              '${index + 1}',
+              l.judul,
+              l.status,
+              l.namaUser ?? '-',
+              l.nikUser ?? '-',
+              l.noHpUser ?? '-',
+              _formatDate(l.createdAt),
+              l.deskripsi,
+              lokasi,
+            ];
+          }),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -86,15 +236,24 @@ class _AdminRekapState extends State<AdminRekap> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.download_rounded),
-            tooltip: 'Export',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AdminExport()),
-            ),
+            icon: _isDownloading
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.download_rounded),
+            tooltip: 'Download rekap PDF',
+            onPressed:
+                (_isLoading || _isDownloading) ? null : _downloadRekapPdf,
           ),
           IconButton(
-              icon: const Icon(Icons.refresh), onPressed: _load),
+            icon: const Icon(Icons.refresh),
+            onPressed: _load,
+          ),
         ],
       ),
       body: _isLoading
@@ -111,8 +270,9 @@ class _AdminRekapState extends State<AdminRekap> {
                           style: TextStyle(color: Colors.grey[700])),
                       const SizedBox(height: 8),
                       ElevatedButton(
-                          onPressed: _load,
-                          child: const Text('Coba Lagi')),
+                        onPressed: _load,
+                        child: const Text('Coba Lagi'),
+                      ),
                     ],
                   ),
                 )
@@ -122,9 +282,9 @@ class _AdminRekapState extends State<AdminRekap> {
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(16),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _buildStatCards(),
+                        _buildStatGrid(),
                         const SizedBox(height: 20),
                         _buildPieChart(),
                         const SizedBox(height: 20),
@@ -139,69 +299,82 @@ class _AdminRekapState extends State<AdminRekap> {
     );
   }
 
-  Widget _buildStatCards() {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.6,
-      children: [
-        _statCard('Total', _total, Icons.assignment_rounded,
-            const Color(0xFF1565C0), const Color(0xFFE3F2FD)),
-        _statCard('Selesai', _selesai, Icons.check_circle_rounded,
-            const Color(0xFF2E7D32), const Color(0xFFE8F5E9)),
-        _statCard('Diproses', _proses, Icons.hourglass_bottom_rounded,
-            const Color(0xFFE65100), const Color(0xFFFFF3E0)),
-        _statCard('Belum Ditangani', _belum, Icons.warning_amber_rounded,
-            const Color(0xFFC62828), const Color(0xFFFFEBEE)),
-      ],
+  /// Layout sama dengan [AdminDashboard._buildStatGrid]
+  Widget _buildStatGrid() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              _statCard('Total', _total, Icons.assignment_rounded,
+                  const Color(0xFF1565C0), const Color(0xFFE3F2FD)),
+              const SizedBox(width: 12),
+              _statCard('Selesai', _selesai, Icons.check_circle_rounded,
+                  const Color(0xFF2E7D32), const Color(0xFFE8F5E9)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _statCard('Diproses', _proses, Icons.hourglass_bottom_rounded,
+                  const Color(0xFFE65100), const Color(0xFFFFF3E0)),
+              const SizedBox(width: 12),
+              _statCard('Belum', _belum, Icons.warning_amber_rounded,
+                  const Color(0xFFC62828), const Color(0xFFFFEBEE)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
   Widget _statCard(
       String label, int value, IconData icon, Color color, Color bg) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 6,
-              offset: const Offset(0, 2))
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration:
-                BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
-            child: Icon(icon, color: color, size: 22),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 12),
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('$value',
-                    style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: color)),
-                Text(label,
-                    style: const TextStyle(
-                        fontSize: 11, color: Colors.black54),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
+                Text(
+                  '$value',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                Text(
+                  label,
+                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                ),
               ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -224,37 +397,37 @@ class _AdminRekapState extends State<AdminRekap> {
                     PieChartSectionData(
                       value: _selesai.toDouble(),
                       color: const Color(0xFF43A047),
-                      title:
-                          '${(_selesai / _total * 100).toStringAsFixed(0)}%',
+                      title: '${(_selesai / _total * 100).toStringAsFixed(0)}%',
                       radius: 55,
                       titleStyle: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   if (_proses > 0)
                     PieChartSectionData(
                       value: _proses.toDouble(),
                       color: const Color(0xFFFF8F00),
-                      title:
-                          '${(_proses / _total * 100).toStringAsFixed(0)}%',
+                      title: '${(_proses / _total * 100).toStringAsFixed(0)}%',
                       radius: 55,
                       titleStyle: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   if (_belum > 0)
                     PieChartSectionData(
                       value: _belum.toDouble(),
                       color: const Color(0xFFE53935),
-                      title:
-                          '${(_belum / _total * 100).toStringAsFixed(0)}%',
+                      title: '${(_belum / _total * 100).toStringAsFixed(0)}%',
                       radius: 55,
                       titleStyle: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                 ],
               ),
@@ -266,8 +439,7 @@ class _AdminRekapState extends State<AdminRekap> {
             children: [
               _legend(const Color(0xFF43A047), 'Selesai ($_selesai)'),
               _legend(const Color(0xFFFF8F00), 'Diproses ($_proses)'),
-              _legend(
-                  const Color(0xFFE53935), 'Belum ($_belum)'),
+              _legend(const Color(0xFFE53935), 'Belum ($_belum)'),
             ],
           ),
         ],
@@ -280,10 +452,13 @@ class _AdminRekapState extends State<AdminRekap> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(
-                color: color, borderRadius: BorderRadius.circular(3))),
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
         const SizedBox(width: 6),
         Text(label, style: const TextStyle(fontSize: 12)),
       ],
@@ -318,8 +493,7 @@ class _AdminRekapState extends State<AdminRekap> {
                   reservedSize: 28,
                   getTitlesWidget: (v, _) => Text(
                     v.toInt().toString(),
-                    style:
-                        const TextStyle(fontSize: 10, color: Colors.black45),
+                    style: const TextStyle(fontSize: 10, color: Colors.black45),
                   ),
                 ),
               ),
@@ -331,8 +505,19 @@ class _AdminRekapState extends State<AdminRekap> {
                     if (idx < 0 || idx >= keys.length) return const SizedBox();
                     final parts = keys[idx].split('-');
                     const shortMonths = [
-                      '', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-                      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+                      '',
+                      'Jan',
+                      'Feb',
+                      'Mar',
+                      'Apr',
+                      'Mei',
+                      'Jun',
+                      'Jul',
+                      'Agu',
+                      'Sep',
+                      'Okt',
+                      'Nov',
+                      'Des'
                     ];
                     final monthIdx = int.tryParse(parts[1]) ?? 0;
                     return Text(
@@ -344,9 +529,11 @@ class _AdminRekapState extends State<AdminRekap> {
                 ),
               ),
               topTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false)),
+                sideTitles: SideTitles(showTitles: false),
+              ),
               rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false)),
+                sideTitles: SideTitles(showTitles: false),
+              ),
             ),
             barGroups: List.generate(keys.length, (i) {
               return BarChartGroupData(
@@ -401,15 +588,22 @@ class _AdminRekapState extends State<AdminRekap> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
-                      child: Text(e.key,
-                          style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600)),
+                      child: Text(
+                        e.key,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
-                    Text('${e.value} (${(pct * 100).toStringAsFixed(0)}%)',
-                        style: TextStyle(
-                            fontSize: 12, color: color,
-                            fontWeight: FontWeight.bold)),
+                    Text(
+                      '${e.value} (${(pct * 100).toStringAsFixed(0)}%)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -439,23 +633,49 @@ class _AdminRekapState extends State<AdminRekap> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 6,
-              offset: const Offset(0, 2))
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: Color(0xFF0D47A1))),
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              color: Color(0xFF0D47A1),
+            ),
+          ),
           const Divider(height: 16),
           child,
         ],
       ),
     );
+  }
+
+  String _formatDate(DateTime dt) {
+    final local = dt.toLocal();
+    const months = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des'
+    ];
+    return '${local.day} ${months[local.month]} ${local.year} '
+        '${local.hour.toString().padLeft(2, '0')}:'
+        '${local.minute.toString().padLeft(2, '0')}';
   }
 }

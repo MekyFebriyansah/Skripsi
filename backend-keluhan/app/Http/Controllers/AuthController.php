@@ -3,14 +3,31 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
+    private function friendlyDbError(\Throwable $e): ?string
+    {
+        if (!$e instanceof QueryException) {
+            return null;
+        }
+
+        $msg = $e->getMessage();
+        if (str_contains($msg, 'actively refused') || str_contains($msg, '[2002]')) {
+            return 'Database MySQL belum berjalan. Buka Laragon → klik Start All atau nyalakan MySQL, lalu coba login lagi.';
+        }
+        if (str_contains($msg, 'Unknown database')) {
+            return 'Database belum dibuat. Jalankan: php artisan migrate di folder backend-keluhan.';
+        }
+
+        return null;
+    }
+
     private function userPayload(User $user): array
     {
         return [
@@ -92,13 +109,18 @@ class AuthController extends Controller
                 'role'    => $user->role,
                 'user'    => $this->userPayload($user),
             ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Terjadi kesalahan server',
-                'error'   => $e->getMessage(),
-                'file'    => $e->getFile(),
-                'line'    => $e->getLine()
-            ], 500);
+        } catch (\Throwable $e) {
+            $friendly = $this->friendlyDbError($e);
+
+            $payload = [
+                'message' => $friendly ?? 'Terjadi kesalahan server',
+            ];
+
+            if (config('app.debug') && !$friendly) {
+                $payload['error'] = $e->getMessage();
+            }
+
+            return response()->json($payload, 500);
         }
     }
 
