@@ -1,9 +1,8 @@
-import 'dart:io';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../models/laporan_model.dart';
 import '../../services/api_service.dart';
 
 class EditProfil extends StatefulWidget {
@@ -82,11 +81,20 @@ class _EditProfilState extends State<EditProfil> {
           'email': _emailCtrl.text.trim(),
       });
       if (!mounted) return;
-      final body = jsonDecode(resp.body);
+
+      Map<String, dynamic>? body;
+      if (resp.body.isNotEmpty) {
+        try {
+          body = jsonDecode(resp.body) as Map<String, dynamic>;
+        } catch (_) {
+          body = null;
+        }
+      }
+
       if (resp.statusCode == 200) {
         Map<String, dynamic>? updatedUser;
-        if (body['user'] != null) {
-          updatedUser = (body['user'] as Map<String, dynamic>)
+        if (body?['user'] != null) {
+          updatedUser = (body!['user'] as Map<String, dynamic>)
               .map((k, v) => MapEntry(k, v?.toString() ?? ''));
         }
 
@@ -96,9 +104,14 @@ class _EditProfilState extends State<EditProfil> {
           );
           if (!mounted) return;
           if (photoResp.statusCode == 200) {
-            final photoBody = jsonDecode(photoResp.body);
-            if (photoBody['user'] != null) {
-              updatedUser = (photoBody['user'] as Map<String, dynamic>)
+            Map<String, dynamic>? photoBody;
+            if (photoResp.body.isNotEmpty) {
+              try {
+                photoBody = jsonDecode(photoResp.body) as Map<String, dynamic>;
+              } catch (_) {}
+            }
+            if (photoBody?['user'] != null) {
+              updatedUser = (photoBody!['user'] as Map<String, dynamic>)
                   .map((k, v) => MapEntry(k, v?.toString() ?? ''));
             }
           } else {
@@ -126,7 +139,7 @@ class _EditProfilState extends State<EditProfil> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(body['message'] ?? 'Gagal memperbarui profil'),
+            content: Text(body?['message'] ?? 'Gagal memperbarui profil'),
             backgroundColor: Colors.red,
           ),
         );
@@ -325,7 +338,7 @@ class _EditProfilState extends State<EditProfil> {
 
     if (_profilePhoto != null && _profilePhoto!.isNotEmpty) {
       return Image.network(
-        buildStorageUrl(ApiService.baseUrl, _profilePhoto!),
+        ApiService.buildStorageUrl(_profilePhoto!),
         width: 104,
         height: 104,
         fit: BoxFit.cover,

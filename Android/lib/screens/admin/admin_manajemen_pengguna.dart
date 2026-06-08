@@ -104,7 +104,9 @@ class _AdminManajemenPenggunaState extends State<AdminManajemenPengguna> {
     try {
       final resp = await ApiService.toggleUserStatus(user['id']);
       if (!mounted) return;
-      final body = jsonDecode(resp.body);
+      final body = resp.body.isNotEmpty
+          ? jsonDecode(resp.body) as Map<String, dynamic>
+          : <String, dynamic>{};
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(body['message'] ?? 'Status diperbarui'),

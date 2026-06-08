@@ -87,20 +87,19 @@ class _AdminKelolaKategoriState extends State<AdminKelolaKategori> {
                   : () async {
                       final nama = namaCtrl.text.trim();
                       if (nama.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content:
-                                  Text('Nama kategori wajib diisi')),
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          const SnackBar(content: Text('Nama kategori wajib diisi')),
                         );
                         return;
                       }
                       setDlg(() => loading = true);
+                      final parentMounted = mounted;
                       try {
-                        final resp = await ApiService.addKategori(
-                            nama, deskCtrl.text.trim());
-                        if (!ctx.mounted) return;
+                        final resp = await ApiService.addKategori(nama, deskCtrl.text.trim());
+                        if (!parentMounted) return;
                         Navigator.pop(ctx);
                         if (resp.statusCode == 201) {
+                          if (!mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Kategori berhasil ditambahkan'),
@@ -109,17 +108,20 @@ class _AdminKelolaKategoriState extends State<AdminKelolaKategori> {
                           );
                           _load();
                         } else {
-                          final body = jsonDecode(resp.body);
+                          final body = resp.body.isNotEmpty
+                              ? jsonDecode(resp.body) as Map<String, dynamic>
+                              : <String, dynamic>{};
+                          if (!mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(
-                                  body['message'] ?? 'Gagal menambahkan'),
+                              content: Text(body['message'] ?? 'Gagal menambahkan'),
                               backgroundColor: Colors.red,
                             ),
                           );
                         }
                       } catch (e) {
                         setDlg(() => loading = false);
+                        if (!mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Error: $e')),
                         );
@@ -185,19 +187,19 @@ class _AdminKelolaKategoriState extends State<AdminKelolaKategori> {
                   : () async {
                       final nama = namaCtrl.text.trim();
                       if (nama.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Nama kategori wajib diisi')),
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          const SnackBar(content: Text('Nama kategori wajib diisi')),
                         );
                         return;
                       }
                       setDlg(() => loading = true);
+                      final parentMounted = mounted;
                       try {
-                        final resp = await ApiService.updateKategori(
-                            k['id'], nama, deskCtrl.text.trim());
-                        if (!ctx.mounted) return;
+                        final resp = await ApiService.updateKategori(k['id'], nama, deskCtrl.text.trim());
+                        if (!parentMounted) return;
                         Navigator.pop(ctx);
                         if (resp.statusCode == 200) {
+                          if (!mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Kategori berhasil diperbarui'),
@@ -206,17 +208,20 @@ class _AdminKelolaKategoriState extends State<AdminKelolaKategori> {
                           );
                           _load();
                         } else {
-                          final body = jsonDecode(resp.body);
+                          final body = resp.body.isNotEmpty
+                              ? jsonDecode(resp.body) as Map<String, dynamic>
+                              : <String, dynamic>{};
+                          if (!mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(
-                                  body['message'] ?? 'Gagal memperbarui'),
+                              content: Text(body['message'] ?? 'Gagal memperbarui'),
                               backgroundColor: Colors.red,
                             ),
                           );
                         }
                       } catch (e) {
                         setDlg(() => loading = false);
+                        if (!mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Error: $e')),
                         );

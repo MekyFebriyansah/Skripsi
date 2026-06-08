@@ -1,11 +1,8 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 import '../../services/api_service.dart';
 import '../../services/file_download_helper.dart';
+import '../../services/pdf_rekap_helper.dart';
 import '../../models/laporan_model.dart';
 
 class AdminRekap extends StatefulWidget {
@@ -90,7 +87,15 @@ class _AdminRekapState extends State<AdminRekap> {
 
     setState(() => _isDownloading = true);
     try {
-      final pdfBytes = await _buildRekapPdf();
+      final pdfBytes = await PdfRekapHelper.generateAdminRekap(
+        laporan: _laporan,
+        total: _total,
+        selesai: _selesai,
+        proses: _proses,
+        belum: _belum,
+        formatDate: _formatDate,
+      );
+
       final fileName =
           'rekap_admin_pengaduan_${DateTime.now().millisecondsSinceEpoch}.pdf';
 
@@ -112,117 +117,6 @@ class _AdminRekapState extends State<AdminRekap> {
     } finally {
       if (mounted) setState(() => _isDownloading = false);
     }
-  }
-
-  Future<Uint8List> _buildRekapPdf() async {
-    final grouped = <String, List<LaporanModel>>{};
-    for (final laporan in _laporan) {
-      final kategori = laporan.kategori ?? 'Lainnya';
-      grouped.putIfAbsent(kategori, () => []).add(laporan);
-    }
-
-    final kategoriKeys = grouped.keys.toList()..sort();
-    final doc = pw.Document();
-
-    doc.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4.landscape,
-        margin: const pw.EdgeInsets.all(24),
-        build: (context) {
-          return [
-            pw.Text(
-              'Rekap Pengaduan Masyarakat — Admin',
-              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
-            ),
-            pw.SizedBox(height: 4),
-            pw.Text('Tanggal Export: ${_formatDate(DateTime.now())}'),
-            pw.Text(
-              'Ringkasan: Total $_total | Selesai $_selesai | '
-              'Diproses $_proses | Belum $_belum',
-            ),
-            pw.SizedBox(height: 16),
-            for (final kategori in kategoriKeys) ...[
-              _buildKategoriPdfSection(kategori, grouped[kategori]!),
-              pw.SizedBox(height: 18),
-            ],
-          ];
-        },
-      ),
-    );
-
-    return doc.save();
-  }
-
-  pw.Widget _buildKategoriPdfSection(
-      String kategori, List<LaporanModel> laporan) {
-    final items = [...laporan]
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Container(
-          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-          decoration: pw.BoxDecoration(
-            color: PdfColors.blue100,
-            borderRadius: pw.BorderRadius.circular(4),
-          ),
-          child: pw.Text(
-            'Kategori: $kategori (${items.length} laporan)',
-            style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
-          ),
-        ),
-        pw.SizedBox(height: 8),
-        pw.Table.fromTextArray(
-          border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
-          headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
-          headerStyle:
-              pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8),
-          cellStyle: const pw.TextStyle(fontSize: 7),
-          cellAlignment: pw.Alignment.topLeft,
-          headerAlignment: pw.Alignment.centerLeft,
-          columnWidths: {
-            0: const pw.FixedColumnWidth(22),
-            1: const pw.FlexColumnWidth(1.6),
-            2: const pw.FlexColumnWidth(1.1),
-            3: const pw.FlexColumnWidth(1.2),
-            4: const pw.FlexColumnWidth(1.2),
-            5: const pw.FlexColumnWidth(1.2),
-            6: const pw.FlexColumnWidth(1.2),
-            7: const pw.FlexColumnWidth(2),
-            8: const pw.FlexColumnWidth(1.6),
-          },
-          headers: [
-            'No',
-            'Judul',
-            'Status',
-            'Pelapor',
-            'NIK',
-            'No HP',
-            'Tanggal',
-            'Deskripsi',
-            'Lokasi',
-          ],
-          data: List.generate(items.length, (index) {
-            final l = items[index];
-            final lokasi = l.latitude != null && l.longitude != null
-                ? '${l.latitude}, ${l.longitude}'
-                : '-';
-            return [
-              '${index + 1}',
-              l.judul,
-              l.status,
-              l.namaUser ?? '-',
-              l.nikUser ?? '-',
-              l.noHpUser ?? '-',
-              _formatDate(l.createdAt),
-              l.deskripsi,
-              lokasi,
-            ];
-          }),
-        ),
-      ],
-    );
   }
 
   @override

@@ -264,7 +264,7 @@ class _UserLaporanDetailState extends State<UserLaporanDetail> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Image.network(
-                    buildStorageUrl(ApiService.baseUrl, laporan.fotoPengaduan!),
+                    buildStorageUrl(laporan.fotoPengaduan!),
                     fit: BoxFit.cover,
                     width: double.infinity,
                     loadingBuilder: (_, child, prog) =>
@@ -303,7 +303,7 @@ class _UserLaporanDetailState extends State<UserLaporanDetail> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Image.network(
-                    buildStorageUrl(ApiService.baseUrl, laporan.fotoProses!),
+                    buildStorageUrl(laporan.fotoProses!),
                     fit: BoxFit.cover,
                     width: double.infinity,
                     loadingBuilder: (_, child, prog) =>
@@ -342,7 +342,7 @@ class _UserLaporanDetailState extends State<UserLaporanDetail> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Image.network(
-                    buildStorageUrl(ApiService.baseUrl, laporan.fotoBukti!),
+                    buildStorageUrl(laporan.fotoBukti!),
                     fit: BoxFit.cover,
                     width: double.infinity,
                     loadingBuilder: (_, child, prog) =>

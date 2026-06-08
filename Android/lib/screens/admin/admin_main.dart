@@ -39,7 +39,7 @@ class _AdminMainState extends State<AdminMain> {
     PushNotificationService.syncTokenToServer();
     _loadUnreadMessages();
     _messageTimer = Timer.periodic(
-      const Duration(seconds: 3),
+      const Duration(seconds: 10),
       (_) => _loadUnreadMessages(showNotification: true),
     );
   }

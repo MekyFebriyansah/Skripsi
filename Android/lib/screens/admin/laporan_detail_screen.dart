@@ -260,7 +260,7 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Image.network(
-                    buildStorageUrl(ApiService.baseUrl, l.fotoPengaduan!),
+                    buildStorageUrl(l.fotoPengaduan!),
                     fit: BoxFit.cover,
                     width: double.infinity,
                     loadingBuilder: (_, child, prog) => prog == null
@@ -296,7 +296,7 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Image.network(
-                    buildStorageUrl(ApiService.baseUrl, l.fotoProses!),
+                    buildStorageUrl(l.fotoProses!),
                     fit: BoxFit.cover,
                     width: double.infinity,
                     loadingBuilder: (_, child, prog) => prog == null
@@ -332,7 +332,7 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Image.network(
-                    buildStorageUrl(ApiService.baseUrl, l.fotoBukti!),
+                    buildStorageUrl(l.fotoBukti!),
                     fit: BoxFit.cover,
                     width: double.infinity,
                     loadingBuilder: (_, child, prog) => prog == null
@@ -457,7 +457,7 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: Image.network(
-                      buildStorageUrl(ApiService.baseUrl, l.fotoProses!),
+                      buildStorageUrl(l.fotoProses!),
                       height: 200,
                       width: double.infinity,
                       fit: BoxFit.cover,
@@ -533,7 +533,7 @@ class _LaporanDetailScreenState extends State<LaporanDetailScreen> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: Image.network(
-                      buildStorageUrl(ApiService.baseUrl, l.fotoBukti!),
+                      buildStorageUrl(l.fotoBukti!),
                       height: 200,
                       width: double.infinity,
                       fit: BoxFit.cover,

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import '../services/api_service.dart';
+import '../services/push_notification_service.dart';
 import 'user/user_main.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -67,6 +68,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         if (!mounted) return;
         _showSnackBar("Registrasi berhasil!");
+        // Sinkronkan FCM token ke server agar push notification langsung aktif
+        PushNotificationService.syncTokenToServer();
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const UserMain()),

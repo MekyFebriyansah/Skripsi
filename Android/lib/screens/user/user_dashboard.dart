@@ -50,7 +50,15 @@ class _UserDashboardState extends State<UserDashboard> {
         _recent = list.take(3).toList();
         _isLoading = false;
       });
-    } catch (_) {
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memuat data: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
       if (mounted) setState(() => _isLoading = false);
     }
   }

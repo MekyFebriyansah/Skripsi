@@ -11,6 +11,16 @@ class ApiService {
   static const _tokenKey = 'auth_token';
   static const _timeout = Duration(seconds: 20);
 
+  // ──────────────── URL HELPER ────────────────
+  /// Helper: bangun URL aman untuk file di storage publik Laravel.
+  /// Spasi dan karakter khusus di nama file di-encode supaya `Image.network`
+  /// tidak gagal load.
+  static String buildStorageUrl(String path) {
+    final base = baseUrl.replaceAll('/api', '');
+    final segments = path.split('/').map(Uri.encodeComponent).join('/');
+    return '$base/storage/$segments';
+  }
+
   // ──────────────── KONFIGURASI BASE URL ────────────────
   // Ganti _lanHost jika IP laptop (server Laragon) berubah.
   // Cek IP dengan: `ipconfig` di Windows -> ambil IPv4 dari Wi-Fi.

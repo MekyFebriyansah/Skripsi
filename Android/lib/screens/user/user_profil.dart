@@ -127,7 +127,7 @@ class _UserProfilState extends State<UserProfil> {
             child: ClipOval(
               child: photo != null && photo.isNotEmpty
                   ? Image.network(
-                      buildStorageUrl(ApiService.baseUrl, photo),
+                      buildStorageUrl(photo),
                       width: 92,
                       height: 92,
                       fit: BoxFit.cover,

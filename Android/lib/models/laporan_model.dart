@@ -1,11 +1,9 @@
-/// Helper: bangun URL aman untuk file di storage publik Laravel.
-/// Spasi dan karakter khusus di nama file di-encode supaya `Image.network`
-/// tidak gagal load.
-String buildStorageUrl(String baseApiUrl, String path) {
-  final base = baseApiUrl.replaceAll('/api', '');
-  // Encode tiap segmen path agar spasi & karakter unicode aman.
-  final segments = path.split('/').map(Uri.encodeComponent).join('/');
-  return '$base/storage/$segments';
+import '../services/api_service.dart';
+
+/// Alias untuk backward-compatibility.
+/// Fungsi utama ada di ApiService.buildStorageUrl().
+String buildStorageUrl(String path) {
+  return ApiService.buildStorageUrl(path);
 }
 
 class LaporanModel {
